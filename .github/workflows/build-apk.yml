@@ -1,0 +1,156 @@
+name: Build Flutter APK
+
+on:
+  push:
+    branches:
+      - main # Ganti dengan master jika branch utama Anda bernama master
+  workflow_dispatch: # Memungkinkan trigger manual dari GitHub Actions UI
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout kode dari repositori
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Bersihkan disk space bawaan runner (fix "No space left on device")
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: false # jangan hapus, Android SDK masih dipakai untuk build
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
+      # 3. Setup Java (disamakan dengan kebutuhan Android Gradle Plugin project ini)
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+
+      # 4. Setup Flutter
+      - name: Setup Flutter
+        uses: flutter-actions/setup-flutter@v4
+        with:
+          channel: 'stable' # Hanya mendukung 'stable' atau 'beta'
+          version: 'latest' # Bisa diganti versi spesifik, mis. '3.24.0', untuk hasil lebih konsisten & cache SDK aktif
+          cache: true
+          cache-sdk: true
+
+      # 5. Ambil dependencies proyek
+      - name: Install dependencies
+        run: flutter pub get
+
+      # 6. Build APK Release
+      - name: Build APK
+        run: flutter build apk --release
+
+      # 7. Upload APK sebagai Artifact agar bisa didownload dari halaman run
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+      # # 8. Setup Python untuk upload ke Google Drive via Drive API resmi
+      # - name: Setup Python
+      #   uses: actions/setup-python@v5
+      #   with:
+      #     python-version: '3.12'
+
+      # - name: Install Google Drive API client
+      #   run: pip install --quiet google-api-python-client google-auth
+
+      # # 9. Upload APK ke Google Drive (OAuth2 akun user asli — service account tidak punya kuota di Gmail biasa)
+      # - name: Upload APK to Google Drive
+      #   env:
+      #     GDRIVE_CLIENT_ID: ${{ secrets.GDRIVE_CLIENT_ID }}
+      #     GDRIVE_CLIENT_SECRET: ${{ secrets.GDRIVE_CLIENT_SECRET }}
+      #     GDRIVE_REFRESH_TOKEN: ${{ secrets.GDRIVE_REFRESH_TOKEN }}
+      #     GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }} # opsional, ada default fallback di script
+      #     FILE_PATH: build/app/outputs/flutter-apk/app-release.apk
+      #     OVERWRITE: 'true' # set 'true' untuk menimpa file lama dengan nama sama
+      #   run: |
+      #     python3 - << 'EOF'
+      #     import os
+      #     import re
+      #     from google.oauth2.credentials import Credentials
+      #     from googleapiclient.discovery import build
+      #     from googleapiclient.http import MediaFileUpload
+
+      #     def get_app_version_info():
+      #         app_name = "app"
+      #         version_str = "1.0.0+1"
+      #         try:
+      #             with open('pubspec.yaml', 'r') as f:
+      #                 content = f.read()
+      #             name_match = re.search(r'^name:\s*([^\s#]+)', content, re.MULTILINE)
+      #             if name_match:
+      #                 app_name = name_match.group(1)
+      #             ver_match = re.search(r'^version:\s*([^\s#]+)', content, re.MULTILINE)
+      #             if ver_match:
+      #                 version_str = ver_match.group(1)
+      #         except Exception as e:
+      #             print(f"Warning saat membaca pubspec.yaml: {e}")
+      #         return app_name, version_str
+
+      #     def main():
+      #         client_id = os.environ.get('GDRIVE_CLIENT_ID', '').strip()
+      #         client_secret = os.environ.get('GDRIVE_CLIENT_SECRET', '').strip()
+      #         refresh_token = os.environ.get('GDRIVE_REFRESH_TOKEN', '').strip()
+
+      #         if not (client_id and client_secret and refresh_token):
+      #             print("::error::GDRIVE_CLIENT_ID / GDRIVE_CLIENT_SECRET / GDRIVE_REFRESH_TOKEN belum lengkap diset.")
+      #             raise SystemExit(1)
+
+      #         credentials = Credentials(
+      #             token=None,
+      #             refresh_token=refresh_token,
+      #             client_id=client_id,
+      #             client_secret=client_secret,
+      #             token_uri='https://oauth2.googleapis.com/token',
+      #             scopes=['https://www.googleapis.com/auth/drive.file'],
+      #         )
+      #         service = build('drive', 'v3', credentials=credentials)
+
+      #         default_folder_id = '1IDgOJD2xAoQl8c07WQ6Ejmbcy3bTOnCB'
+      #         folder_id = os.environ.get('GDRIVE_FOLDER_ID', '').strip() or default_folder_id
+
+      #         file_path = os.environ['FILE_PATH']
+      #         app_name, version_str = get_app_version_info()
+
+      #         # Nama file di Google Drive sesuai versi & build dari pubspec.yaml (contoh: superappdjp-v1.0.3+23.apk)
+      #         file_name = f"{app_name}-v{version_str}.apk"
+      #         overwrite = os.environ.get('OVERWRITE', 'true').lower() == 'true'
+
+      #         print(f"Target upload APK: {file_name} ke Google Drive folder ID: {folder_id} (overwrite={overwrite})")
+
+      #         if overwrite:
+      #             query = f"name = '{file_name}' and '{folder_id}' in parents and trashed = false"
+      #             results = service.files().list(q=query, fields='files(id, name)').execute()
+      #             for item in results.get('files', []):
+      #                 service.files().delete(fileId=item['id']).execute()
+      #                 print(f"Menghapus file lama dengan nama sama: {item['name']} ({item['id']})")
+
+      #         file_metadata = {'name': file_name, 'parents': [folder_id]}
+      #         media = MediaFileUpload(file_path, resumable=True)
+      #         uploaded = service.files().create(
+      #             body=file_metadata,
+      #             media_body=media,
+      #             fields='id, webViewLink',
+      #         ).execute()
+
+      #         print(f"Upload berhasil!")
+      #         print(f"Nama File: {file_name}")
+      #         print(f"File ID  : {uploaded.get('id')}")
+      #         print(f"Link     : {uploaded.get('webViewLink')}")
+
+      #     if __name__ == '__main__':
+      #         main()
+      #     EOF
