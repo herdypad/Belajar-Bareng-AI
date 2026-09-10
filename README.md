@@ -67,7 +67,9 @@ Aplikasi latihan soal pilihan ganda berbasis AI untuk Android, iOS, dan Web. Tul
 
 ## Tangkapan Layar
 
-> Belum tersedia. Kontribusi berupa screenshot atau GIF sangat kami hargai — lihat [Kontribusi](#kontribusi).
+| Beranda | Buat Kuis Baru |
+| :---: | :---: |
+| <img src="ss/Screenshot_1789010270.png" width="320" alt="Beranda" /> | <img src="ss/Screenshot_1789010345.png" width="320" alt="Buat Kuis Baru" /> |
 
 ## Persyaratan
 
