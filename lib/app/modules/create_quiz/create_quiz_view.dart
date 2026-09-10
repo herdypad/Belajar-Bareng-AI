@@ -49,7 +49,7 @@ class CreateQuizView extends GetView<CreateQuizController> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _label(Icons.auto_awesome, 'Topik / Deskripsi'),
+          _label(context, Icons.auto_awesome, 'Topik / Deskripsi'),
           const SizedBox(height: 8),
           TextField(
             controller: controller.topicCtrl,
@@ -65,7 +65,7 @@ class CreateQuizView extends GetView<CreateQuizController> {
             spacing: 8,
             runSpacing: 8,
             children: CreateQuizController.suggestions
-                .map((sug) => _suggestionChip(sug))
+                .map((sug) => _suggestionChip(context, sug))
                 .toList(),
           ),
           const SizedBox(height: 20),
@@ -76,7 +76,7 @@ class CreateQuizView extends GetView<CreateQuizController> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _label(Icons.tag, 'Jumlah Soal'),
+                    _label(context, Icons.tag, 'Jumlah Soal'),
                     const SizedBox(height: 8),
                     TextField(
                       controller: controller.countCtrl,
@@ -95,7 +95,7 @@ class CreateQuizView extends GetView<CreateQuizController> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _label(Icons.schedule, 'Waktu (menit)'),
+                    _label(context, Icons.schedule, 'Waktu (menit)'),
                     const SizedBox(height: 8),
                     TextField(
                       controller: controller.minutesCtrl,
@@ -116,10 +116,11 @@ class CreateQuizView extends GetView<CreateQuizController> {
     );
   }
 
-  Widget _label(IconData icon, String text) {
+  Widget _label(BuildContext context, IconData icon, String text) {
+    final s = context.surfaces;
     return Row(
       children: [
-        Icon(icon, size: 16, color: AppColors.lilac),
+        Icon(icon, size: 16, color: s.accent),
         const SizedBox(width: 8),
         Text(text, style: const TextStyle(fontWeight: FontWeight.w500)),
       ],
@@ -127,6 +128,7 @@ class CreateQuizView extends GetView<CreateQuizController> {
   }
 
   Widget _fileUploadSection(BuildContext context) {
+    final s = context.surfaces;
     return Obx(() {
       final file = controller.uploadedFile.value;
       if (file != null) {
@@ -139,7 +141,7 @@ class CreateQuizView extends GetView<CreateQuizController> {
           ),
           child: Row(
             children: [
-              const Icon(Icons.attach_file, size: 18, color: AppColors.lilac),
+              Icon(Icons.attach_file, size: 18, color: s.accent),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -151,7 +153,7 @@ class CreateQuizView extends GetView<CreateQuizController> {
               const SizedBox(width: 8),
               InkWell(
                 onTap: controller.clearFile,
-                child: const Icon(Icons.close, size: 18, color: AppColors.lilac),
+                child: Icon(Icons.close, size: 18, color: s.accent),
               ),
             ],
           ),
@@ -163,7 +165,7 @@ class CreateQuizView extends GetView<CreateQuizController> {
         icon: const Icon(Icons.upload_file, size: 18),
         label: const Text('Upload File (.txt, .md, .pdf)'),
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.lilac,
+          foregroundColor: s.accent,
           side: BorderSide(color: AppColors.primary.withValues(alpha: 0.3)),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -172,7 +174,8 @@ class CreateQuizView extends GetView<CreateQuizController> {
     });
   }
 
-  Widget _suggestionChip(String text) {
+  Widget _suggestionChip(BuildContext context, String text) {
+    final s = context.surfaces;
     return InkWell(
       borderRadius: BorderRadius.circular(999),
       onTap: () => controller.setTopic(text),
@@ -184,7 +187,7 @@ class CreateQuizView extends GetView<CreateQuizController> {
           border: Border.all(color: AppColors.primary.withValues(alpha: 0.30)),
         ),
         child: Text(text,
-            style: const TextStyle(fontSize: 11, color: AppColors.lilac)),
+            style: TextStyle(fontSize: 11, color: s.accent, fontWeight: FontWeight.w500)),
       ),
     );
   }

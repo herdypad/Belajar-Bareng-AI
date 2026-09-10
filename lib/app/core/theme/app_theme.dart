@@ -59,6 +59,9 @@ class AppTheme {
           input: brightness == Brightness.dark
               ? AppColors.darkInput
               : AppColors.lightInput,
+          accent: brightness == Brightness.dark
+              ? AppColors.lilac
+              : AppColors.primary,
         ),
       ],
     );
@@ -77,21 +80,30 @@ class AppSurfaces extends ThemeExtension<AppSurfaces> {
   final Color border;
   final Color muted;
   final Color input;
+  final Color accent;
 
   const AppSurfaces({
     required this.card,
     required this.border,
     required this.muted,
     required this.input,
+    required this.accent,
   });
 
   @override
-  AppSurfaces copyWith({Color? card, Color? border, Color? muted, Color? input}) =>
+  AppSurfaces copyWith({
+    Color? card,
+    Color? border,
+    Color? muted,
+    Color? input,
+    Color? accent,
+  }) =>
       AppSurfaces(
         card: card ?? this.card,
         border: border ?? this.border,
         muted: muted ?? this.muted,
         input: input ?? this.input,
+        accent: accent ?? this.accent,
       );
 
   @override
@@ -102,6 +114,7 @@ class AppSurfaces extends ThemeExtension<AppSurfaces> {
       border: Color.lerp(border, other.border, t)!,
       muted: Color.lerp(muted, other.muted, t)!,
       input: Color.lerp(input, other.input, t)!,
+      accent: Color.lerp(accent, other.accent, t)!,
     );
   }
 }

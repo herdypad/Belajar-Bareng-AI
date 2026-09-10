@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 
 import '../../data/models/quiz.dart';
 import '../../data/repositories/quiz_repository.dart';
+import '../../data/services/settings_service.dart';
 import '../../routes/app_routes.dart';
 
 class QuizSummary {
@@ -24,6 +25,7 @@ class QuizSummary {
 
 class HomeController extends GetxController {
   final QuizRepository _repo = Get.find<QuizRepository>();
+  final SettingsService settings = Get.find<SettingsService>();
 
   final quizzes = <QuizSummary>[].obs;
 

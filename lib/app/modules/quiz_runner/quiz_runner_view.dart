@@ -81,7 +81,7 @@ class QuizRunnerView extends GetView<QuizRunnerController> {
               Text('Soal ${controller.currentIndex.value + 1} dari ${controller.total}',
                   style: TextStyle(fontSize: 12, color: s.muted)),
               Text('${controller.answeredCount}/${controller.total} terjawab',
-                  style: const TextStyle(fontSize: 12, color: AppColors.lilac)),
+                  style: TextStyle(fontSize: 12, color: s.accent, fontWeight: FontWeight.w500)),
             ],
           ),
           const SizedBox(height: 8),

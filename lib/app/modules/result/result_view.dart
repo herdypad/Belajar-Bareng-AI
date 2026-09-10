@@ -80,6 +80,7 @@ class ResultView extends GetView<ResultController> {
   }
 
   Widget _statsRow(BuildContext context) {
+    final s = context.surfaces;
     return Row(
       children: [
         Expanded(
@@ -93,7 +94,7 @@ class ResultView extends GetView<ResultController> {
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: _statCard(context, Icons.schedule, AppColors.lilac,
+          child: _statCard(context, Icons.schedule, s.accent,
               controller.timeLabel, 'Waktu'),
         ),
       ],

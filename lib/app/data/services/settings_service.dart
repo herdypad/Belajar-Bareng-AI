@@ -10,7 +10,9 @@ import '../providers/openai_provider.dart';
 
 enum AiVendor { anthropic, openai }
 
-/// Menyimpan & menyediakan pengaturan AI. API key disimpan di secure storage.
+enum AppThemeSetting { light, dark, system }
+
+/// Menyimpan & menyediakan pengaturan AI & tampilan. API key disimpan di secure storage.
 class SettingsService extends GetxService {
   final _secureStorage = const FlutterSecureStorage();
   SharedPreferences? _prefs;
@@ -19,6 +21,7 @@ class SettingsService extends GetxService {
   final model = 'gpt-4o-mini'.obs;
   final baseUrl = 'https://api.openai.com/v1'.obs;
   final apiKey = ''.obs;
+  final themeSetting = AppThemeSetting.dark.obs;
   final darkMode = true.obs;
   final isTestingConnection = false.obs;
 
@@ -27,6 +30,41 @@ class SettingsService extends GetxService {
   static const _kBaseUrl = 'baseUrl';
   static const _kApiKey = 'apiKey';
   static const _kDark = 'darkMode';
+  static const _kTheme = 'themeSetting';
+
+  ThemeMode get currentThemeMode {
+    switch (themeSetting.value) {
+      case AppThemeSetting.light:
+        return ThemeMode.light;
+      case AppThemeSetting.dark:
+        return ThemeMode.dark;
+      case AppThemeSetting.system:
+        return ThemeMode.system;
+    }
+  }
+
+  bool get isDarkModeActive {
+    if (themeSetting.value == AppThemeSetting.system) {
+      final brightness = WidgetsBinding.instance.platformDispatcher.platformBrightness;
+      return brightness == Brightness.dark;
+    }
+    return themeSetting.value == AppThemeSetting.dark;
+  }
+
+  void toggleDarkMode() {
+    if (isDarkModeActive) {
+      setTheme(AppThemeSetting.light);
+    } else {
+      setTheme(AppThemeSetting.dark);
+    }
+  }
+
+  void setTheme(AppThemeSetting setting) {
+    themeSetting.value = setting;
+    darkMode.value = setting == AppThemeSetting.dark;
+    save();
+    Get.changeThemeMode(currentThemeMode);
+  }
 
   Future<void> load() async {
     _prefs = await SharedPreferences.getInstance();
@@ -41,8 +79,26 @@ class SettingsService extends GetxService {
     model.value = await _read(_kModel) ?? model.value;
     baseUrl.value = await _read(_kBaseUrl) ?? baseUrl.value;
     apiKey.value = await _read(_kApiKey) ?? apiKey.value;
-    final d = await _read(_kDark);
-    if (d != null) darkMode.value = d == 'true';
+
+    final t = await _read(_kTheme);
+    if (t == 'light') {
+      themeSetting.value = AppThemeSetting.light;
+      darkMode.value = false;
+    } else if (t == 'system') {
+      themeSetting.value = AppThemeSetting.system;
+      darkMode.value = false;
+    } else if (t == 'dark') {
+      themeSetting.value = AppThemeSetting.dark;
+      darkMode.value = true;
+    } else {
+      final d = await _read(_kDark);
+      if (d != null) {
+        final isDark = d == 'true';
+        darkMode.value = isDark;
+        themeSetting.value = isDark ? AppThemeSetting.dark : AppThemeSetting.light;
+      }
+    }
+    Get.changeThemeMode(currentThemeMode);
   }
 
   Future<void> save() async {
@@ -50,7 +106,8 @@ class SettingsService extends GetxService {
     await _write(_kModel, model.value);
     await _write(_kBaseUrl, baseUrl.value);
     await _write(_kApiKey, apiKey.value);
-    await _write(_kDark, darkMode.value.toString());
+    await _write(_kDark, (themeSetting.value == AppThemeSetting.dark).toString());
+    await _write(_kTheme, themeSetting.value.name);
   }
   
   Future<String?> _read(String key) async {

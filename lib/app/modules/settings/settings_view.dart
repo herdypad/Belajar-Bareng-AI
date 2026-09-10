@@ -64,25 +64,101 @@ class SettingsView extends GetView<SettingsController> {
         const SizedBox(height: 12),
         AppCard(
           padding: const EdgeInsets.all(16),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.dark_mode_outlined, size: 24),
-              const SizedBox(width: 16),
-              const Expanded(
-                child: Text('Mode Gelap', style: TextStyle(fontSize: 16)),
+              const Row(
+                children: [
+                  Icon(Icons.palette_outlined, size: 20, color: AppColors.primary),
+                  SizedBox(width: 8),
+                  Text('Tema Aplikasi', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                ],
               ),
-              Obx(() => Switch(
-                value: controller.settings.darkMode.value,
-                activeThumbColor: AppColors.primary,
-                onChanged: (val) {
-                  controller.settings.darkMode.value = val;
-                  controller.settings.save();
-                },
-              )),
+              const SizedBox(height: 14),
+              Obx(() {
+                final current = controller.settings.themeSetting.value;
+                return Row(
+                  children: [
+                    Expanded(
+                      child: _themeOptionBtn(
+                        context: context,
+                        icon: Icons.light_mode_outlined,
+                        label: 'Terang',
+                        active: current == AppThemeSetting.light,
+                        onTap: () => controller.settings.setTheme(AppThemeSetting.light),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _themeOptionBtn(
+                        context: context,
+                        icon: Icons.dark_mode_outlined,
+                        label: 'Gelap',
+                        active: current == AppThemeSetting.dark,
+                        onTap: () => controller.settings.setTheme(AppThemeSetting.dark),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _themeOptionBtn(
+                        context: context,
+                        icon: Icons.brightness_auto_outlined,
+                        label: 'Sistem',
+                        active: current == AppThemeSetting.system,
+                        onTap: () => controller.settings.setTheme(AppThemeSetting.system),
+                      ),
+                    ),
+                  ],
+                );
+              }),
             ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _themeOptionBtn({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required bool active,
+    required VoidCallback onTap,
+  }) {
+    final s = context.surfaces;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        decoration: BoxDecoration(
+          color: active ? AppColors.primary.withValues(alpha: 0.12) : s.input,
+          border: Border.all(
+            color: active ? AppColors.primary : s.border,
+            width: active ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 22,
+              color: active ? AppColors.primary : s.muted,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                color: active ? AppColors.primary : context.theme.colorScheme.onSurface,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

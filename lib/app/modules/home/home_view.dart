@@ -66,8 +66,21 @@ class HomeView extends GetView<HomeController> {
             ],
           ),
         ),
-        CircleIconButton(
-            icon: Icons.settings_outlined, onTap: controller.goSettings),
+        Obx(() {
+          final isDark = controller.settings.isDarkModeActive;
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircleIconButton(
+                icon: isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                onTap: controller.settings.toggleDarkMode,
+              ),
+              const SizedBox(width: 8),
+              CircleIconButton(
+                  icon: Icons.settings_outlined, onTap: controller.goSettings),
+            ],
+          );
+        }),
       ],
     );
   }
@@ -131,11 +144,12 @@ class HomeView extends GetView<HomeController> {
   }
 
   Widget _stats(BuildContext context) {
+    final s = context.surfaces;
     final avg = controller.averageScore;
     return Row(
       children: [
         Expanded(
-          child: _statCard(context, Icons.menu_book_outlined, AppColors.lilac,
+          child: _statCard(context, Icons.menu_book_outlined, s.accent,
               'Total Kuis', '${controller.totalQuiz}'),
         ),
         const SizedBox(width: 12),
@@ -171,6 +185,7 @@ class HomeView extends GetView<HomeController> {
   }
 
   Widget _recentHeader(BuildContext context) {
+    final s = context.surfaces;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -178,7 +193,7 @@ class HomeView extends GetView<HomeController> {
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
         TextButton.icon(
           onPressed: controller.goHistory,
-          style: TextButton.styleFrom(foregroundColor: AppColors.lilac),
+          style: TextButton.styleFrom(foregroundColor: s.accent),
           icon: const Icon(Icons.history, size: 16),
           label: const Text('Riwayat', style: TextStyle(fontSize: 13)),
         ),
@@ -187,11 +202,12 @@ class HomeView extends GetView<HomeController> {
   }
 
   Widget _emptyState(BuildContext context, Color muted) {
+    final s = context.surfaces;
     return AppCard(
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          const Icon(Icons.auto_awesome, size: 24, color: AppColors.lilac),
+          Icon(Icons.auto_awesome, size: 24, color: s.accent),
           const SizedBox(height: 8),
           Text('Belum ada kuis. Mulai buat satu sekarang!',
               textAlign: TextAlign.center,
@@ -213,8 +229,8 @@ class HomeView extends GetView<HomeController> {
               color: AppColors.primary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.menu_book_outlined,
-                size: 20, color: AppColors.lilac),
+            child: Icon(Icons.menu_book_outlined,
+                size: 20, color: s.accent),
           ),
           const SizedBox(width: 12),
           Expanded(

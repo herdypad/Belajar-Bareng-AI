@@ -42,7 +42,7 @@ class BelajarBarengAiApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,
-        themeMode: settings.darkMode.value ? ThemeMode.dark : ThemeMode.light,
+        themeMode: settings.currentThemeMode,
         initialRoute: AppRoutes.home,
         getPages: AppPages.pages,
       ),
