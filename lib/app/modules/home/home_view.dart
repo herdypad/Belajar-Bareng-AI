@@ -32,12 +32,10 @@ class HomeView extends GetView<HomeController> {
                 if (controller.quizzes.isEmpty)
                   _emptyState(context, s.muted)
                 else
-                  ...controller.quizzes
-                      .take(4)
-                      .map((q) => Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: _quizTile(context, q),
-                          )),
+                  ...controller.quizzes.take(4).map((q) => Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _quizTile(context, q),
+                      )),
               ],
             ),
           ),
@@ -58,7 +56,7 @@ class HomeView extends GetView<HomeController> {
               Text('Halo, selamat belajar',
                   style: TextStyle(fontSize: 13, color: s.muted)),
               const SizedBox(height: 4),
-              const Text('Belajar Bareng AI ✨',
+              const Text('BB AI ✨',
                   style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
@@ -72,7 +70,9 @@ class HomeView extends GetView<HomeController> {
             mainAxisSize: MainAxisSize.min,
             children: [
               CircleIconButton(
-                icon: isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                icon: isDark
+                    ? Icons.light_mode_outlined
+                    : Icons.dark_mode_outlined,
                 onTap: controller.settings.toggleDarkMode,
               ),
               const SizedBox(width: 8),
@@ -109,7 +109,8 @@ class HomeView extends GetView<HomeController> {
               const SizedBox(width: 8),
               Text('AI Generator',
                   style: TextStyle(
-                      fontSize: 12, color: Colors.white.withValues(alpha: 0.9))),
+                      fontSize: 12,
+                      color: Colors.white.withValues(alpha: 0.9))),
             ],
           ),
           const SizedBox(height: 16),
@@ -124,19 +125,43 @@ class HomeView extends GetView<HomeController> {
               style: TextStyle(
                   fontSize: 13, color: Colors.white.withValues(alpha: 0.75))),
           const SizedBox(height: 16),
-          ElevatedButton.icon(
-            onPressed: controller.goCreate,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: AppColors.primaryDeep,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(999)),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-            ),
-            icon: const Icon(Icons.add, size: 18),
-            label: const Text('Buat Kuis Baru',
-                style: TextStyle(fontWeight: FontWeight.w600)),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              ElevatedButton.icon(
+                onPressed: controller.goCreate,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: AppColors.primaryDeep,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(999)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                ),
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('Buat Kuis Baru',
+                    style: TextStyle(fontWeight: FontWeight.w600)),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => controller.openImportDialog(context),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.4),
+                    width: 1.5,
+                  ),
+                  backgroundColor: Colors.white.withValues(alpha: 0.1),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(999)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+                icon: const Icon(Icons.file_upload_outlined, size: 18),
+                label: const Text('Import Soal',
+                    style: TextStyle(fontWeight: FontWeight.w600)),
+              ),
+            ],
           ),
         ],
       ),
@@ -209,7 +234,7 @@ class HomeView extends GetView<HomeController> {
         children: [
           Icon(Icons.auto_awesome, size: 24, color: s.accent),
           const SizedBox(height: 8),
-          Text('Belum ada kuis. Mulai buat satu sekarang!',
+          Text('Belum ada kuis. Mulai buat atau import kuis sekarang!',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, color: muted)),
         ],
@@ -229,8 +254,7 @@ class HomeView extends GetView<HomeController> {
               color: AppColors.primary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(Icons.menu_book_outlined,
-                size: 20, color: s.accent),
+            child: Icon(Icons.menu_book_outlined, size: 20, color: s.accent),
           ),
           const SizedBox(width: 12),
           Expanded(

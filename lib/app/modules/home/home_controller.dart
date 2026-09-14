@@ -1,9 +1,17 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../data/models/quiz.dart';
 import '../../data/repositories/quiz_repository.dart';
+import '../../data/services/quiz_import_service.dart';
 import '../../data/services/settings_service.dart';
 import '../../routes/app_routes.dart';
+import 'widgets/import_quiz_sheet.dart';
 
 class QuizSummary {
   final String id;
@@ -23,9 +31,17 @@ class QuizSummary {
   });
 }
 
+class PickedQuizResult {
+  final String fileName;
+  final ParsedQuizData data;
+
+  PickedQuizResult({required this.fileName, required this.data});
+}
+
 class HomeController extends GetxController {
   final QuizRepository _repo = Get.find<QuizRepository>();
   final SettingsService settings = Get.find<SettingsService>();
+  final QuizImportService importService = QuizImportService();
 
   final quizzes = <QuizSummary>[].obs;
 
@@ -81,4 +97,76 @@ class HomeController extends GetxController {
     await Get.toNamed(AppRoutes.runner, arguments: id);
     refreshQuizzes();
   }
+
+  /// Membuka modal bottom sheet import soal
+  void openImportDialog(BuildContext context) {
+    ImportQuizSheet.show(context, this);
+  }
+
+  /// Memilih file JSON dari storage perangkat dan mem-parsing isinya
+  Future<PickedQuizResult?> pickAndParseJsonFile() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['json', 'txt'],
+      withData: true,
+    );
+
+    if (result == null || result.files.isEmpty) return null;
+
+    final file = result.files.first;
+    String content = '';
+
+    if (file.bytes != null) {
+      content = utf8.decode(file.bytes!);
+    } else if (!kIsWeb && file.path != null) {
+      final fileObj = File(file.path!);
+      content = await fileObj.readAsString();
+    }
+
+    if (content.trim().isEmpty) {
+      throw ImportException('File kosong atau tidak dapat dibaca.');
+    }
+
+    final baseName = file.name.replaceAll(RegExp(r'\.[^.]+$'), '');
+    final data = importService.parse(content, defaultTitle: baseName);
+    return PickedQuizResult(fileName: file.name, data: data);
+  }
+
+  /// Mem-parsing string teks JSON yang ditempel
+  ParsedQuizData parseJsonText(String text, {String? defaultTitle}) {
+    return importService.parse(text, defaultTitle: defaultTitle);
+  }
+
+  /// Menyimpan kuis yang berhasil diimport ke repository
+  Future<void> saveImportedQuiz(
+    ParsedQuizData data, {
+    required String title,
+    required int durationMinutes,
+    bool startImmediately = false,
+  }) async {
+    final quiz = importService.buildQuiz(
+      data: data,
+      fallbackTitle: title,
+      defaultDurationMinutes: durationMinutes,
+    );
+
+    await _repo.saveQuiz(quiz);
+    refreshQuizzes();
+
+    Get.snackbar(
+      'Berhasil',
+      'Kuis "${quiz.title}" (${quiz.totalQuestions} soal) berhasil diimpor.',
+      snackPosition: SnackPosition.BOTTOM,
+      margin: const EdgeInsets.all(16),
+      backgroundColor: const Color(0xFF10B981),
+      colorText: Colors.white,
+      duration: const Duration(seconds: 3),
+    );
+
+    if (startImmediately) {
+      await Get.toNamed(AppRoutes.runner, arguments: quiz.id);
+      refreshQuizzes();
+    }
+  }
 }
+
