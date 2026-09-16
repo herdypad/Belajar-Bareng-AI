@@ -20,14 +20,68 @@ class ResultController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    final args = Get.arguments as Map<String, dynamic>;
-    final quizId = args['quizId'] as String;
-    answers = List<int>.from(args['answers'] as List);
-    timeUsedSec = args['timeUsedSec'] as int;
-    quiz = _repo.getQuiz(quizId)!;
+    final rawArgs = Get.arguments;
+    String quizId;
+    bool isNewSubmission = false;
+
+    if (rawArgs is String) {
+      quizId = rawArgs;
+    } else if (rawArgs is Map<String, dynamic>) {
+      quizId = rawArgs['quizId'] as String;
+      if (rawArgs.containsKey('answers') && rawArgs.containsKey('timeUsedSec')) {
+        answers = List<int>.from(rawArgs['answers'] as List);
+        timeUsedSec = rawArgs['timeUsedSec'] as int;
+        isNewSubmission = true;
+      }
+    } else {
+      _handleError('Data kuis tidak valid.');
+      return;
+    }
+
+    final loadedQuiz = _repo.getQuiz(quizId);
+    if (loadedQuiz == null) {
+      _handleError('Kuis tidak ditemukan.');
+      return;
+    }
+    quiz = loadedQuiz;
+
+    if (!isNewSubmission) {
+      final savedResult = _repo.getResult(quizId);
+      if (savedResult != null) {
+        answers = List<int>.from(savedResult.userAnswers);
+        timeUsedSec = savedResult.timeUsedSec;
+        percentage = savedResult.score;
+        correct = 0;
+        for (var i = 0; i < quiz.questions.length; i++) {
+          if (i < answers.length && answers[i] == quiz.questions[i].correctIndex) {
+            correct++;
+          }
+        }
+        wrong = quiz.questions.length - correct;
+        return;
+      } else {
+        _handleError('Kuis ini belum pernah dikerjakan.');
+        return;
+      }
+    }
 
     _calculate();
     _persist();
+  }
+
+  void _handleError(String message) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (Get.isDialogOpen == true || Get.isBottomSheetOpen == true) {
+        Get.back();
+      }
+      Get.back();
+      Get.snackbar(
+        'Perhatian',
+        message,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+      );
+    });
   }
 
   void _calculate() {
@@ -70,13 +124,15 @@ class ResultController extends GetxController {
   }
 
   void goReview() {
-    final result = QuizResult(
-      quizId: quiz.id,
-      userAnswers: answers,
-      score: percentage,
-      timeUsedSec: timeUsedSec,
-      completedAt: DateTime.now(),
-    );
+    final result = _repo.getResult(quiz.id) ??
+        QuizResult(
+          quizId: quiz.id,
+          userAnswers: answers,
+          score: percentage,
+          timeUsedSec: timeUsedSec,
+          completedAt: DateTime.now(),
+        );
+
     Get.toNamed(AppRoutes.review, arguments: {
       'quiz': quiz,
       'result': result,

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/circle_icon_button.dart';
+import '../../core/widgets/google_search_webview_sheet.dart';
 import '../../core/widgets/mobile_shell.dart';
 import 'review_controller.dart';
 
@@ -36,8 +39,10 @@ class ReviewView extends GetView<ReviewController> {
           CircleIconButton(icon: Icons.close, onTap: Get.back),
           const SizedBox(width: 16),
           const Expanded(
-            child: Text('Review Jawaban',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+            child: Text(
+              'Review Jawaban',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
           ),
         ],
       ),
@@ -48,19 +53,21 @@ class ReviewView extends GetView<ReviewController> {
     final s = context.surfaces;
     return Obx(() {
       final cur = controller.currentIndex.value + 1;
-      final tot = controller.quiz.totalQuestions;
+      final tot = controller.totalQuestions;
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         child: Row(
           children: [
-            Text('Soal $cur dari $tot',
-                style: TextStyle(fontSize: 13, color: s.muted)),
+            Text(
+              'Soal $cur dari $tot',
+              style: TextStyle(fontSize: 13, color: s.muted),
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(
-                  value: cur / tot,
+                  value: tot == 0 ? 0 : cur / tot,
                   backgroundColor: s.border,
                   valueColor: const AlwaysStoppedAnimation(AppColors.primary),
                   minHeight: 6,
@@ -75,118 +82,279 @@ class ReviewView extends GetView<ReviewController> {
 
   Widget _questionArea(BuildContext context) {
     return Obx(() {
-      final qIndex = controller.currentIndex.value;
-      final question = controller.quiz.questions[qIndex];
-      final userAnswer = controller.result.userAnswers[qIndex];
-      
-      return ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          AppCard(
-            padding: const EdgeInsets.all(20),
-            child: Text(
-              question.question,
-              style: const TextStyle(
-                  fontSize: 18, height: 1.5, fontWeight: FontWeight.w500),
-            ),
-          ),
-          const SizedBox(height: 24),
-          ...List.generate(question.options.length, (optIdx) {
-            final isCorrect = optIdx == question.correctIndex;
-            final isUserSelected = optIdx == userAnswer;
-            
-            Color bgColor = context.surfaces.card;
-            Color borderColor = context.surfaces.border;
-            Color textColor = context.surfaces.muted;
-            IconData? trailingIcon;
-            
-            if (isCorrect) {
-              bgColor = AppColors.success.withValues(alpha: 0.1);
-              borderColor = AppColors.success;
-              textColor = AppColors.success;
-              trailingIcon = Icons.check_circle;
-            } else if (isUserSelected && !isCorrect) {
-              bgColor = AppColors.danger.withValues(alpha: 0.1);
-              borderColor = AppColors.danger;
-              textColor = AppColors.danger;
-              trailingIcon = Icons.cancel;
-            }
-            
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: bgColor,
-                  border: Border.all(color: borderColor),
-                  borderRadius: BorderRadius.circular(16),
+      final question = controller.currentQuestion;
+      final userAnswer = controller.currentUserAnswer;
+      final isCorrect = controller.isAnswerCorrect;
+      final isUnanswered = controller.isUnanswered;
+
+      return SelectionArea(
+        contextMenuBuilder: (context, selectableRegionState) {
+          final buttonItems = selectableRegionState.contextMenuButtonItems;
+          return AdaptiveTextSelectionToolbar.buttonItems(
+            anchors: selectableRegionState.contextMenuAnchors,
+            buttonItems: [
+              ...buttonItems,
+              ContextMenuButtonItem(
+                onPressed: () async {
+                  selectableRegionState.hideToolbar();
+                  Actions.maybeInvoke(
+                    context,
+                    CopySelectionTextIntent.copy,
+                  );
+                  final data = await Clipboard.getData(Clipboard.kTextPlain);
+                  final text = data?.text?.trim() ?? '';
+                  if (text.isNotEmpty && context.mounted) {
+                    GoogleSearchWebViewSheet.show(context, query: text);
+                  }
+                },
+                label: 'Cari di Google 🔍',
+              ),
+            ],
+          );
+        },
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            // Status Badge (Benar / Salah / Tidak Dijawab)
+            _statusBadge(isCorrect: isCorrect, isUnanswered: isUnanswered),
+            const SizedBox(height: 12),
+
+            AppCard(
+              padding: const EdgeInsets.all(20),
+              child: Text(
+                question.question,
+                style: const TextStyle(
+                  fontSize: 17,
+                  height: 1.5,
+                  fontWeight: FontWeight.w600,
                 ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 28,
-                      height: 28,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: isCorrect || (isUserSelected && !isCorrect) 
-                            ? textColor 
-                            : context.surfaces.border,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        String.fromCharCode(65 + optIdx),
-                        style: TextStyle(
-                            color: isCorrect || (isUserSelected && !isCorrect)
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Options List
+            ...List.generate(question.options.length, (optIdx) {
+              final isOptCorrect = optIdx == question.correctIndex;
+              final isUserSelected = optIdx == userAnswer;
+
+              Color bgColor = context.surfaces.card;
+              Color borderColor = context.surfaces.border;
+              Color textColor = context.surfaces.muted;
+              IconData? trailingIcon;
+              String? badgeText;
+
+              if (isOptCorrect) {
+                bgColor = AppColors.success.withValues(alpha: 0.1);
+                borderColor = AppColors.success;
+                textColor = AppColors.success;
+                trailingIcon = Icons.check_circle;
+                badgeText =
+                    isUserSelected ? 'Jawaban Kamu (Benar)' : 'Kunci Jawaban';
+              } else if (isUserSelected) {
+                bgColor = AppColors.danger.withValues(alpha: 0.1);
+                borderColor = AppColors.danger;
+                textColor = AppColors.danger;
+                trailingIcon = Icons.cancel;
+                badgeText = 'Jawaban Kamu (Salah)';
+              }
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: bgColor,
+                    border: Border.all(
+                      color: borderColor,
+                      width: (isOptCorrect || isUserSelected) ? 1.5 : 1,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 30,
+                        height: 30,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: isOptCorrect || isUserSelected
+                              ? textColor
+                              : context.surfaces.border,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          String.fromCharCode(65 + optIdx),
+                          style: TextStyle(
+                            color: isOptCorrect || isUserSelected
                                 ? Colors.white
                                 : context.surfaces.muted,
                             fontWeight: FontWeight.bold,
-                            fontSize: 14),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Text(
-                        question.options[optIdx],
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: context.theme.colorScheme.onSurface,
-                          fontWeight: (isCorrect || isUserSelected) 
-                              ? FontWeight.w600 : FontWeight.normal,
+                            fontSize: 14,
+                          ),
                         ),
                       ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              question.options[optIdx],
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: context.theme.colorScheme.onSurface,
+                                fontWeight: (isOptCorrect || isUserSelected)
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
+                              ),
+                            ),
+                            if (badgeText != null) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                badgeText,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: textColor,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      if (trailingIcon != null)
+                        Icon(trailingIcon, color: textColor, size: 20),
+                    ],
+                  ),
+                ),
+              );
+            }),
+
+            const SizedBox(height: 8),
+
+            // Explanation Section
+            if (question.explanation.isNotEmpty)
+              AppCard(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.lightbulb_outline,
+                          color: AppColors.warning,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Pembahasan',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const Spacer(),
+                        InkWell(
+                          onTap: () => GoogleSearchWebViewSheet.show(
+                            context,
+                            query:
+                                '${question.question} ${question.explanation}',
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.search_rounded,
+                                  size: 14,
+                                  color: AppColors.primary,
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Cari Topik',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    if (trailingIcon != null)
-                      Icon(trailingIcon, color: textColor, size: 20),
+                    const SizedBox(height: 10),
+                    Text(
+                      question.explanation,
+                      style: const TextStyle(fontSize: 14, height: 1.5),
+                    ),
                   ],
                 ),
               ),
-            );
-          }),
-          const SizedBox(height: 16),
-          AppCard(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  children: [
-                    Icon(Icons.lightbulb, color: AppColors.warning, size: 20),
-                    SizedBox(width: 8),
-                    Text('Penjelasan', 
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  question.explanation,
-                  style: const TextStyle(fontSize: 14, height: 1.5),
-                ),
-              ],
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _statusBadge({required bool isCorrect, required bool isUnanswered}) {
+    Color bg;
+    Color fg;
+    IconData icon;
+    String text;
+
+    if (isUnanswered) {
+      bg = AppColors.warning.withValues(alpha: 0.12);
+      fg = AppColors.warning;
+      icon = Icons.help_outline_rounded;
+      text = 'Kamu tidak menjawab soal ini';
+    } else if (isCorrect) {
+      bg = AppColors.success.withValues(alpha: 0.12);
+      fg = AppColors.success;
+      icon = Icons.check_circle_outline_rounded;
+      text = 'Jawaban Kamu Benar 🎉';
+    } else {
+      bg = AppColors.danger.withValues(alpha: 0.12);
+      fg = AppColors.danger;
+      icon = Icons.highlight_off_rounded;
+      text = 'Jawaban Kamu Kurang Tepat';
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: fg.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: fg, size: 18),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: fg,
             ),
           ),
         ],
-      );
-    });
+      ),
+    );
   }
 
   Widget _bottomNav(BuildContext context) {
@@ -197,26 +365,42 @@ class ReviewView extends GetView<ReviewController> {
         border: Border(top: BorderSide(color: context.surfaces.border)),
       ),
       child: Obx(() {
-        final cur = controller.currentIndex.value;
-        final tot = controller.quiz.totalQuestions;
+        final cur = controller.currentIndex.value + 1;
+        final tot = controller.totalQuestions;
+        final isLast = cur >= tot;
+
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             ElevatedButton.icon(
-              onPressed: cur > 0 ? controller.prev : null,
-              icon: const Icon(Icons.arrow_back),
+              onPressed: cur > 1 ? controller.prev : null,
+              icon: const Icon(Icons.arrow_back, size: 18),
               label: const Text('Sebelumnya'),
               style: ElevatedButton.styleFrom(
-                  backgroundColor: context.surfaces.border,
-                  foregroundColor: context.theme.colorScheme.onSurface),
+                backgroundColor: context.surfaces.border,
+                foregroundColor: context.theme.colorScheme.onSurface,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
             ),
             ElevatedButton(
-              onPressed: cur < tot - 1 ? controller.next : null,
+              onPressed: isLast ? Get.back : controller.next,
               style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white),
-              child: const Row(
-                children: [Text('Selanjutnya'), SizedBox(width: 8), Icon(Icons.arrow_forward)],
+                backgroundColor: isLast ? AppColors.success : AppColors.primary,
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(isLast ? 'Selesai Review' : 'Selanjutnya'),
+                  const SizedBox(width: 8),
+                  Icon(
+                    isLast ? Icons.check_circle_outline : Icons.arrow_forward,
+                    size: 18,
+                  ),
+                ],
               ),
             ),
           ],

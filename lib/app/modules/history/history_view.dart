@@ -12,7 +12,6 @@ class HistoryView extends GetView<HistoryController> {
 
   @override
   Widget build(BuildContext context) {
-    
     return Scaffold(
       body: SafeArea(
         child: MobileShell(
@@ -24,11 +23,30 @@ class HistoryView extends GetView<HistoryController> {
                   if (controller.historyList.isEmpty) {
                     return _emptyState(context);
                   }
+                  final isTablet = MediaQuery.of(context).size.width >= 600;
+
+                  if (isTablet) {
+                    return GridView.builder(
+                      padding: const EdgeInsets.fromLTRB(28, 16, 28, 32),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        mainAxisExtent: 88,
+                      ),
+                      itemCount: controller.historyList.length,
+                      itemBuilder: (_, i) =>
+                          _historyTile(context, controller.historyList[i]),
+                    );
+                  }
+
                   return ListView.separated(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
                     itemCount: controller.historyList.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemBuilder: (_, i) => _historyTile(context, controller.historyList[i]),
+                    itemBuilder: (_, i) =>
+                        _historyTile(context, controller.historyList[i]),
                   );
                 }),
               ),
@@ -40,8 +58,9 @@ class HistoryView extends GetView<HistoryController> {
   }
 
   Widget _header(BuildContext context) {
+    final isTablet = MediaQuery.of(context).size.width >= 600;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
+      padding: EdgeInsets.fromLTRB(isTablet ? 28 : 20, 24, isTablet ? 28 : 20, 8),
       child: Row(
         children: [
           CircleIconButton(icon: Icons.arrow_back, onTap: Get.back),
@@ -75,22 +94,24 @@ class HistoryView extends GetView<HistoryController> {
 
   Widget _historyTile(BuildContext context, HistoryItem item) {
     final s = context.surfaces;
+    final isDone = item.score != null;
+
     return AppCard(
-      onTap: () => controller.openQuiz(item.id),
+      onTap: () => controller.onItemTap(context, item),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: item.score != null 
+              color: isDone
                   ? AppColors.success.withValues(alpha: 0.15)
                   : AppColors.primary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
-              item.score != null ? Icons.done_all : Icons.pending_actions,
+              isDone ? Icons.done_all : Icons.pending_actions,
               size: 24,
-              color: item.score != null ? AppColors.success : AppColors.primary,
+              color: isDone ? AppColors.success : AppColors.primary,
             ),
           ),
           const SizedBox(width: 16),
@@ -118,7 +139,7 @@ class HistoryView extends GetView<HistoryController> {
               ],
             ),
           ),
-          if (item.score != null)
+          if (isDone) ...[
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
@@ -127,28 +148,95 @@ class HistoryView extends GetView<HistoryController> {
               ),
               child: Text('${item.score}%',
                   style: const TextStyle(
-                      fontSize: 12, 
-                      fontWeight: FontWeight.w700, 
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
                       color: AppColors.success)),
             ),
-          PopupMenuButton(
+            const SizedBox(width: 6),
+            TextButton.icon(
+              onPressed: () => controller.openReview(item.id),
+              icon: const Icon(Icons.rate_review_outlined, size: 14),
+              label: const Text('Review',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+          ],
+          PopupMenuButton<String>(
             icon: Icon(Icons.more_vert, size: 20, color: s.muted),
+            onSelected: (value) {
+              if (value == 'review') {
+                controller.openReview(item.id);
+              } else if (value == 'result') {
+                controller.openResult(item.id);
+              } else if (value == 'retry') {
+                controller.retryQuiz(item.id);
+              } else if (value == 'delete') {
+                controller.deleteQuiz(item.id);
+              }
+            },
             itemBuilder: (context) => [
-              PopupMenuItem(
+              if (isDone) ...[
+                const PopupMenuItem(
+                  value: 'review',
+                  child: Row(
+                    children: [
+                      Icon(Icons.rate_review_outlined,
+                          color: AppColors.primary, size: 20),
+                      SizedBox(width: 8),
+                      Text('Review Jawaban'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'result',
+                  child: Row(
+                    children: [
+                      Icon(Icons.insights_outlined,
+                          color: AppColors.success, size: 20),
+                      SizedBox(width: 8),
+                      Text('Lihat Hasil'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'retry',
+                  child: Row(
+                    children: [
+                      Icon(Icons.replay_rounded, color: s.accent, size: 20),
+                      const SizedBox(width: 8),
+                      const Text('Kerjakan Ulang'),
+                    ],
+                  ),
+                ),
+              ] else ...[
+                const PopupMenuItem(
+                  value: 'retry',
+                  child: Row(
+                    children: [
+                      Icon(Icons.play_arrow_outlined,
+                          color: AppColors.primary, size: 20),
+                      SizedBox(width: 8),
+                      Text('Mulai Kerjakan'),
+                    ],
+                  ),
+                ),
+              ],
+              const PopupMenuItem(
                 value: 'delete',
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(Icons.delete_outline, color: AppColors.danger, size: 20),
+                    Icon(Icons.delete_outline,
+                        color: AppColors.danger, size: 20),
                     SizedBox(width: 8),
-                    Text('Hapus Kuis', style: TextStyle(color: AppColors.danger)),
+                    Text('Hapus Kuis',
+                        style: TextStyle(color: AppColors.danger)),
                   ],
                 ),
-                onTap: () {
-                  Future.delayed(
-                    const Duration(milliseconds: 100), 
-                    () => controller.deleteQuiz(item.id)
-                  );
-                },
               ),
             ],
           ),

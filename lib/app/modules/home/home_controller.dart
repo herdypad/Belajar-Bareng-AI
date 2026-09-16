@@ -10,6 +10,7 @@ import '../../data/models/quiz.dart';
 import '../../data/repositories/quiz_repository.dart';
 import '../../data/services/quiz_import_service.dart';
 import '../../data/services/settings_service.dart';
+import '../../core/widgets/quiz_action_sheet.dart';
 import '../../routes/app_routes.dart';
 import 'widgets/import_quiz_sheet.dart';
 
@@ -96,6 +97,42 @@ class HomeController extends GetxController {
   Future<void> openQuiz(String id) async {
     await Get.toNamed(AppRoutes.runner, arguments: id);
     refreshQuizzes();
+  }
+
+  Future<void> openReview(String id) async {
+    await Get.toNamed(AppRoutes.review, arguments: id);
+    refreshQuizzes();
+  }
+
+  Future<void> openResult(String id) async {
+    await Get.toNamed(AppRoutes.result, arguments: id);
+    refreshQuizzes();
+  }
+
+  void onQuizTap(BuildContext context, QuizSummary q) {
+    if (q.lastScore != null) {
+      QuizActionSheet.show(
+        context,
+        title: q.title,
+        totalQuestions: q.totalQuestions,
+        durationMinutes: q.durationMinutes,
+        score: q.lastScore,
+        onReview: () {
+          Navigator.of(context).pop();
+          openReview(q.id);
+        },
+        onResult: () {
+          Navigator.of(context).pop();
+          openResult(q.id);
+        },
+        onRetry: () {
+          Navigator.of(context).pop();
+          openQuiz(q.id);
+        },
+      );
+    } else {
+      openQuiz(q.id);
+    }
   }
 
   /// Membuka modal bottom sheet import soal

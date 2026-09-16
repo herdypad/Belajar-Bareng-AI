@@ -17,6 +17,7 @@ class CreateQuizView extends GetView<CreateQuizController> {
     return Scaffold(
       body: SafeArea(
         child: MobileShell(
+          maxWidth: 680,
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
             children: [

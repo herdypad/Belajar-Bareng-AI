@@ -16,6 +16,7 @@ class SettingsView extends GetView<SettingsController> {
     return Scaffold(
       body: SafeArea(
         child: MobileShell(
+          maxWidth: 680,
           child: Column(
             children: [
               _header(context),

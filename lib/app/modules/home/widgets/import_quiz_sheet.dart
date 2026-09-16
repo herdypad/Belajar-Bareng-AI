@@ -14,11 +14,21 @@ class ImportQuizSheet extends StatefulWidget {
   const ImportQuizSheet({super.key, required this.controller});
 
   static Future<void> show(BuildContext context, HomeController controller) {
+    final isTablet = MediaQuery.of(context).size.width >= 600;
+
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => ImportQuizSheet(controller: controller),
+      constraints: BoxConstraints(
+        maxWidth: isTablet ? 640 : double.infinity,
+      ),
+      builder: (_) => Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: ImportQuizSheet(controller: controller),
+        ),
+      ),
     );
   }
 

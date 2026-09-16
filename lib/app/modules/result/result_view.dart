@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
+import '../../core/widgets/circle_icon_button.dart';
 import '../../core/widgets/mobile_shell.dart';
 import 'result_controller.dart';
 
@@ -16,9 +17,12 @@ class ResultView extends GetView<ResultController> {
     return Scaffold(
       body: SafeArea(
         child: MobileShell(
+          maxWidth: 680,
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 32, 20, 24),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             children: [
+              _header(context),
+              const SizedBox(height: 20),
               _scoreRing(context),
               const SizedBox(height: 16),
               Text(controller.verdict,
@@ -37,6 +41,21 @@ class ResultView extends GetView<ResultController> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _header(BuildContext context) {
+    return Row(
+      children: [
+        CircleIconButton(icon: Icons.arrow_back, onTap: Get.back),
+        const SizedBox(width: 16),
+        const Expanded(
+          child: Text(
+            'Hasil Kuis',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+          ),
+        ),
+      ],
     );
   }
 
@@ -135,7 +154,7 @@ class ResultView extends GetView<ResultController> {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(999)),
             ),
-            icon: const Icon(Icons.menu_book_outlined, size: 18),
+            icon: const Icon(Icons.rate_review_outlined, size: 18),
             label: const Text('Review Jawaban',
                 style: TextStyle(fontWeight: FontWeight.w600)),
           ),
@@ -154,7 +173,7 @@ class ResultView extends GetView<ResultController> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(999)),
                   ),
-                  icon: const Icon(Icons.refresh, size: 18),
+                  icon: const Icon(Icons.replay_rounded, size: 18),
                   label: const Text('Coba Lagi'),
                 ),
               ),

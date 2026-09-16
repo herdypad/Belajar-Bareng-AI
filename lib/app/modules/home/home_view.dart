@@ -14,12 +14,19 @@ class HomeView extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     final s = context.surfaces;
+    final isTablet = MediaQuery.of(context).size.width >= 600;
+
     return Scaffold(
       body: SafeArea(
         child: MobileShell(
           child: Obx(
             () => ListView(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+              padding: EdgeInsets.fromLTRB(
+                isTablet ? 28 : 20,
+                24,
+                isTablet ? 28 : 20,
+                32,
+              ),
               children: [
                 _header(context),
                 const SizedBox(height: 24),
@@ -31,6 +38,23 @@ class HomeView extends GetView<HomeController> {
                 const SizedBox(height: 12),
                 if (controller.quizzes.isEmpty)
                   _emptyState(context, s.muted)
+                else if (isTablet)
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      mainAxisExtent: 88,
+                    ),
+                    itemCount: controller.quizzes.length > 8
+                        ? 8
+                        : controller.quizzes.length,
+                    itemBuilder: (_, i) =>
+                        _quizTile(context, controller.quizzes[i]),
+                  )
                 else
                   ...controller.quizzes.take(4).map((q) => Padding(
                         padding: const EdgeInsets.only(bottom: 10),
@@ -86,12 +110,14 @@ class HomeView extends GetView<HomeController> {
   }
 
   Widget _heroCta(BuildContext context) {
+    final isTablet = MediaQuery.of(context).size.width >= 600;
+
     return Container(
       decoration: BoxDecoration(
         gradient: AppColors.heroGradient,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(isTablet ? 24 : 20),
       ),
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(isTablet ? 32 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -110,23 +136,30 @@ class HomeView extends GetView<HomeController> {
               Text('AI Generator',
                   style: TextStyle(
                       fontSize: 12,
+                      fontWeight: FontWeight.w600,
                       color: Colors.white.withValues(alpha: 0.9))),
             ],
           ),
           const SizedBox(height: 16),
-          const Text('Buat kuis pintar\ndari topik apa saja',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  height: 1.25,
-                  fontWeight: FontWeight.w700)),
+          Text(
+            isTablet
+                ? 'Buat kuis pintar dari topik apa saja'
+                : 'Buat kuis pintar\ndari topik apa saja',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: isTablet ? 24 : 22,
+              height: 1.25,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: 4),
           Text('Tulis topik, atur waktu, lalu mulai latihan.',
               style: TextStyle(
-                  fontSize: 13, color: Colors.white.withValues(alpha: 0.75))),
-          const SizedBox(height: 16),
+                  fontSize: isTablet ? 14 : 13,
+                  color: Colors.white.withValues(alpha: 0.75))),
+          const SizedBox(height: 18),
           Wrap(
-            spacing: 10,
+            spacing: 12,
             runSpacing: 10,
             children: [
               ElevatedButton.icon(
@@ -137,7 +170,7 @@ class HomeView extends GetView<HomeController> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(999)),
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
                 ),
                 icon: const Icon(Icons.add, size: 18),
                 label: const Text('Buat Kuis Baru',
@@ -155,7 +188,7 @@ class HomeView extends GetView<HomeController> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(999)),
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
                 ),
                 icon: const Icon(Icons.file_upload_outlined, size: 18),
                 label: const Text('Import Soal',
@@ -244,17 +277,27 @@ class HomeView extends GetView<HomeController> {
 
   Widget _quizTile(BuildContext context, QuizSummary q) {
     final s = context.surfaces;
+    final isDone = q.lastScore != null;
+
     return AppCard(
-      onTap: () => controller.openQuiz(q.id),
+      onTap: () => controller.onQuizTap(context, q),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.15),
+              color: isDone
+                  ? AppColors.success.withValues(alpha: 0.15)
+                  : AppColors.primary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(Icons.menu_book_outlined, size: 20, color: s.accent),
+            child: Icon(
+              isDone
+                  ? Icons.assignment_turned_in_outlined
+                  : Icons.menu_book_outlined,
+              size: 20,
+              color: isDone ? AppColors.success : s.accent,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -276,17 +319,34 @@ class HomeView extends GetView<HomeController> {
                     const SizedBox(width: 4),
                     Text('${q.durationMinutes}m',
                         style: TextStyle(fontSize: 11, color: s.muted)),
-                    if (q.lastScore != null) ...[
+                    if (isDone) ...[
                       const SizedBox(width: 12),
                       Text('${q.lastScore}%',
                           style: const TextStyle(
-                              fontSize: 11, color: AppColors.success)),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.success)),
                     ],
                   ],
                 ),
               ],
             ),
           ),
+          if (isDone) ...[
+            TextButton.icon(
+              onPressed: () => controller.openReview(q.id),
+              icon: const Icon(Icons.rate_review_outlined, size: 14),
+              label: const Text('Review',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+            const SizedBox(width: 4),
+          ],
           Icon(Icons.chevron_right, size: 18, color: s.muted),
         ],
       ),
