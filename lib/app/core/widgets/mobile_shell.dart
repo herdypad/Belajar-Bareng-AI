@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 /// Breakpoint acuan untuk tampilan responsif mobile vs tablet vs desktop.
 class ResponsiveBreakpoints {
   static const double tablet = 600;
+  static const double tabletLandscape = 900;
   static const double desktop = 1024;
 
   static bool isMobile(BuildContext context) =>
@@ -15,11 +16,15 @@ class ResponsiveBreakpoints {
 
   static bool isTabletOrLarger(BuildContext context) =>
       MediaQuery.of(context).size.width >= tablet;
+
+  static bool isTabletLandscapeOrDesktop(BuildContext context) =>
+      MediaQuery.of(context).size.width >= tabletLandscape;
 }
 
 /// Shell tata letak responsif.
 /// Pada ponsel (lebar < 600px), membatasi lebar konten maks ~480px.
-/// Pada tablet (lebar >= 600px), memperluas konten hingga maks ~860px (atau kustom).
+/// Pada tablet portrait (lebar 600-899px), memperluas konten hingga maks ~860px.
+/// Pada tablet landscape / desktop (lebar >= 900px), memperluas konten hingga maks ~1040px.
 class MobileShell extends StatelessWidget {
   final Widget child;
   final double? maxWidth;
@@ -35,7 +40,9 @@ class MobileShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isTab = ResponsiveBreakpoints.isTabletOrLarger(context);
-    final effectiveMaxWidth = maxWidth ?? (isTab ? 860.0 : 480.0);
+    final isWide = ResponsiveBreakpoints.isTabletLandscapeOrDesktop(context);
+    final defaultMaxWidth = isWide ? 1040.0 : (isTab ? 860.0 : 480.0);
+    final effectiveMaxWidth = maxWidth ?? defaultMaxWidth;
 
     return Center(
       child: ConstrainedBox(

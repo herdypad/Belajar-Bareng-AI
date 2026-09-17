@@ -14,7 +14,7 @@ class HomeView extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     final s = context.surfaces;
-    final isTablet = MediaQuery.of(context).size.width >= 600;
+    final isTablet = ResponsiveBreakpoints.isTabletOrLarger(context);
 
     return Scaffold(
       body: SafeArea(
@@ -45,9 +45,9 @@ class HomeView extends GetView<HomeController> {
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      mainAxisExtent: 88,
+                      crossAxisSpacing: 14,
+                      mainAxisSpacing: 14,
+                      mainAxisExtent: 96,
                     ),
                     itemCount: controller.quizzes.length > 8
                         ? 8
@@ -303,6 +303,7 @@ class HomeView extends GetView<HomeController> {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(q.title,
                     maxLines: 1,

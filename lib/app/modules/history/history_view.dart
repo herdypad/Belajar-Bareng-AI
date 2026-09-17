@@ -23,7 +23,7 @@ class HistoryView extends GetView<HistoryController> {
                   if (controller.historyList.isEmpty) {
                     return _emptyState(context);
                   }
-                  final isTablet = MediaQuery.of(context).size.width >= 600;
+                  final isTablet = ResponsiveBreakpoints.isTabletOrLarger(context);
 
                   if (isTablet) {
                     return GridView.builder(
@@ -31,9 +31,9 @@ class HistoryView extends GetView<HistoryController> {
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        mainAxisExtent: 88,
+                        crossAxisSpacing: 14,
+                        mainAxisSpacing: 14,
+                        mainAxisExtent: 100,
                       ),
                       itemCount: controller.historyList.length,
                       itemBuilder: (_, i) =>
@@ -118,6 +118,7 @@ class HistoryView extends GetView<HistoryController> {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(item.title,
                     maxLines: 1,
@@ -141,7 +142,7 @@ class HistoryView extends GetView<HistoryController> {
           ),
           if (isDone) ...[
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: AppColors.success.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(100),
@@ -152,18 +153,15 @@ class HistoryView extends GetView<HistoryController> {
                       fontWeight: FontWeight.w700,
                       color: AppColors.success)),
             ),
-            const SizedBox(width: 6),
-            TextButton.icon(
+            const SizedBox(width: 4),
+            IconButton(
               onPressed: () => controller.openReview(item.id),
-              icon: const Icon(Icons.rate_review_outlined, size: 14),
-              label: const Text('Review',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
+              icon: const Icon(Icons.rate_review_outlined, size: 18),
+              tooltip: 'Review Jawaban',
+              color: AppColors.primary,
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.all(4),
+              constraints: const BoxConstraints(),
             ),
           ],
           PopupMenuButton<String>(

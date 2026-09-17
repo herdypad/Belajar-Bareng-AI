@@ -42,8 +42,15 @@ class QuizRunnerView extends GetView<QuizRunnerController> {
 
   Widget _topBar(BuildContext context) {
     final s = context.surfaces;
+    final isTablet = ResponsiveBreakpoints.isTabletOrLarger(context);
+
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+      padding: EdgeInsets.fromLTRB(
+        isTablet ? 32 : 20,
+        20,
+        isTablet ? 32 : 20,
+        14,
+      ),
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: s.border)),
       ),
@@ -79,9 +86,12 @@ class QuizRunnerView extends GetView<QuizRunnerController> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Soal ${controller.currentIndex.value + 1} dari ${controller.total}',
-                  style: TextStyle(fontSize: 12, color: s.muted)),
+                  style: TextStyle(fontSize: isTablet ? 14 : 12, color: s.muted)),
               Text('${controller.answeredCount}/${controller.total} terjawab',
-                  style: TextStyle(fontSize: 12, color: s.accent, fontWeight: FontWeight.w500)),
+                  style: TextStyle(
+                      fontSize: isTablet ? 14 : 12,
+                      color: s.accent,
+                      fontWeight: FontWeight.w500)),
             ],
           ),
           const SizedBox(height: 8),
@@ -89,7 +99,7 @@ class QuizRunnerView extends GetView<QuizRunnerController> {
             borderRadius: BorderRadius.circular(999),
             child: LinearProgressIndicator(
               value: controller.progress,
-              minHeight: 6,
+              minHeight: isTablet ? 8 : 6,
               backgroundColor: s.input,
               valueColor:
                   const AlwaysStoppedAnimation<Color>(AppColors.primary),
@@ -129,20 +139,58 @@ class QuizRunnerView extends GetView<QuizRunnerController> {
 
   Widget _questionArea(BuildContext context) {
     final q = controller.quiz.questions[controller.currentIndex.value];
+    final isTablet = ResponsiveBreakpoints.isTabletOrLarger(context);
+
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+      padding: EdgeInsets.fromLTRB(
+        isTablet ? 32 : 20,
+        24,
+        isTablet ? 32 : 20,
+        24,
+      ),
       children: [
         AppCard(
-          padding: const EdgeInsets.all(20),
-          child: Text(q.question,
-              style: const TextStyle(
-                  fontSize: 16, height: 1.5, fontWeight: FontWeight.w500)),
+          padding: EdgeInsets.all(isTablet ? 24 : 20),
+          child: Text(
+            q.question,
+            style: TextStyle(
+              fontSize: isTablet ? 18 : 16,
+              height: 1.5,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ),
         const SizedBox(height: 20),
-        ...List.generate(q.options.length, (i) => Padding(
+        if (isTablet && q.options.length >= 2) ...[
+          for (int r = 0; r < q.options.length; r += 2) ...[
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: _optionTile(context, r, q.options[r]),
+                  ),
+                  const SizedBox(width: 14),
+                  if (r + 1 < q.options.length)
+                    Expanded(
+                      child: _optionTile(context, r + 1, q.options[r + 1]),
+                    )
+                  else
+                    const Spacer(),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+        ] else ...[
+          ...List.generate(
+            q.options.length,
+            (i) => Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: _optionTile(context, i, q.options[i]),
-            )),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -194,8 +242,12 @@ class QuizRunnerView extends GetView<QuizRunnerController> {
 
   Widget _bottomNav(BuildContext context) {
     final s = context.surfaces;
+    final isTablet = ResponsiveBreakpoints.isTabletOrLarger(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      padding: EdgeInsets.symmetric(
+        horizontal: isTablet ? 32 : 20,
+        vertical: isTablet ? 16 : 12,
+      ),
       decoration: BoxDecoration(
         border: Border(top: BorderSide(color: s.border)),
       ),

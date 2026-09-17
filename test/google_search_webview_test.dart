@@ -42,6 +42,36 @@ class FakeRepo extends GetxService implements QuizRepository {
 
 void main() {
   group('Google Search WebView and Text Selection Tests', () {
+    test('cleanQuery strips JSON structure and extracts clean sentence', () {
+      // Normal sentence
+      expect(
+        GoogleSearchWebViewSheet.cleanQuery('Hukum Newton 1 tentang kelembaman'),
+        'Hukum Newton 1 tentang kelembaman',
+      );
+
+      // JSON object with question key
+      expect(
+        GoogleSearchWebViewSheet.cleanQuery(
+          '{"question": "Berapakah massa jenis air murni?", "options": ["1000 kg/m3"]}',
+        ),
+        'Berapakah massa jenis air murni?',
+      );
+
+      // JSON array
+      expect(
+        GoogleSearchWebViewSheet.cleanQuery(
+          '[{"question": "Siapa penemu gaya gravitasi?"}]',
+        ),
+        'Siapa penemu gaya gravitasi?',
+      );
+
+      // Quoted string
+      expect(
+        GoogleSearchWebViewSheet.cleanQuery('"Proses respirasi aerob"'),
+        'Proses respirasi aerob',
+      );
+    });
+
     testWidgets('GoogleSearchWebViewSheet renders search query and controls',
         (tester) async {
       await tester.pumpWidget(

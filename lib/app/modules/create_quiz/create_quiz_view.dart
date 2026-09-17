@@ -14,32 +14,112 @@ class CreateQuizView extends GetView<CreateQuizController> {
 
   @override
   Widget build(BuildContext context) {
+    final isTablet = ResponsiveBreakpoints.isTabletOrLarger(context);
+
     return Scaffold(
       body: SafeArea(
         child: MobileShell(
-          maxWidth: 680,
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+            padding: EdgeInsets.fromLTRB(
+              isTablet ? 32 : 20,
+              24,
+              isTablet ? 32 : 20,
+              32,
+            ),
             children: [
               Row(
                 children: [
                   CircleIconButton(
                       icon: Icons.arrow_back, onTap: Get.back),
                   const SizedBox(width: 12),
-                  const Text('Buat Kuis Baru',
-                      style: TextStyle(
-                          fontSize: 20, fontWeight: FontWeight.w700)),
+                  Text(
+                    'Buat Kuis Baru',
+                    style: TextStyle(
+                      fontSize: isTablet ? 24 : 20,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 24),
-              _formCard(context),
-              const SizedBox(height: 24),
-              _infoBox(context),
-              const SizedBox(height: 24),
-              _generateButton(),
+              if (isTablet)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 6,
+                      child: _topicCard(context),
+                    ),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      flex: 5,
+                      child: Column(
+                        children: [
+                          _paramsCard(context),
+                          const SizedBox(height: 16),
+                          _infoBox(context),
+                          const SizedBox(height: 20),
+                          _generateButton(),
+                        ],
+                      ),
+                    ),
+                  ],
+                )
+              else ...[
+                _formCard(context),
+                const SizedBox(height: 20),
+                _infoBox(context),
+                const SizedBox(height: 20),
+                _generateButton(),
+              ],
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _topicCard(BuildContext context) {
+    return AppCard(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _label(context, Icons.auto_awesome, 'Topik / Deskripsi'),
+          const SizedBox(height: 8),
+          TextField(
+            controller: controller.topicCtrl,
+            onChanged: controller.setTopic,
+            maxLines: 6,
+            decoration: _inputDecoration(
+                context, 'Contoh: Sejarah perang dunia ke-2 di Asia Pasifik'),
+          ),
+          const SizedBox(height: 16),
+          _fileUploadSection(context),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: CreateQuizController.suggestions
+                .map((sug) => _suggestionChip(context, sug))
+                .toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _paramsCard(BuildContext context) {
+    return AppCard(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Pengaturan Kuis',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 14),
+          _paramsRow(context),
+        ],
       ),
     );
   }
@@ -70,50 +150,54 @@ class CreateQuizView extends GetView<CreateQuizController> {
                 .toList(),
           ),
           const SizedBox(height: 20),
-          Row(
+          _paramsRow(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _paramsRow(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _label(context, Icons.tag, 'Jumlah Soal'),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: controller.countCtrl,
-                      onChanged: controller.setCount,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly
-                      ],
-                      decoration: _inputDecoration(context, '10'),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _label(context, Icons.schedule, 'Waktu (menit)'),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: controller.minutesCtrl,
-                      onChanged: controller.setMinutes,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly
-                      ],
-                      decoration: _inputDecoration(context, '15'),
-                    ),
-                  ],
-                ),
+              _label(context, Icons.tag, 'Jumlah Soal'),
+              const SizedBox(height: 8),
+              TextField(
+                controller: controller.countCtrl,
+                onChanged: controller.setCount,
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly
+                ],
+                decoration: _inputDecoration(context, '10'),
               ),
             ],
           ),
-        ],
-      ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _label(context, Icons.schedule, 'Waktu (menit)'),
+              const SizedBox(height: 8),
+              TextField(
+                controller: controller.minutesCtrl,
+                onChanged: controller.setMinutes,
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly
+                ],
+                decoration: _inputDecoration(context, '15'),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

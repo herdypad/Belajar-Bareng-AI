@@ -14,29 +14,73 @@ class ResultView extends GetView<ResultController> {
   @override
   Widget build(BuildContext context) {
     final s = context.surfaces;
+    final isTablet = ResponsiveBreakpoints.isTabletOrLarger(context);
+
     return Scaffold(
       body: SafeArea(
         child: MobileShell(
-          maxWidth: 680,
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            padding: EdgeInsets.fromLTRB(
+              isTablet ? 32 : 20,
+              20,
+              isTablet ? 32 : 20,
+              32,
+            ),
             children: [
               _header(context),
-              const SizedBox(height: 20),
-              _scoreRing(context),
-              const SizedBox(height: 16),
-              Text(controller.verdict,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      fontSize: 22, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 4),
-              Text(controller.quiz.title,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 13, color: s.muted)),
-              const SizedBox(height: 20),
-              _statsRow(context),
               const SizedBox(height: 24),
-              _actions(),
+              if (isTablet)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      flex: 5,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _scoreRing(context),
+                          const SizedBox(height: 20),
+                          Text(controller.verdict,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                  fontSize: 24, fontWeight: FontWeight.w700)),
+                          const SizedBox(height: 6),
+                          Text(controller.quiz.title,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontSize: 14, color: s.muted)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 28),
+                    Expanded(
+                      flex: 6,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _statsRow(context),
+                          const SizedBox(height: 28),
+                          _actions(),
+                        ],
+                      ),
+                    ),
+                  ],
+                )
+              else ...[
+                _scoreRing(context),
+                const SizedBox(height: 16),
+                Text(controller.verdict,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        fontSize: 22, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 4),
+                Text(controller.quiz.title,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 13, color: s.muted)),
+                const SizedBox(height: 20),
+                _statsRow(context),
+                const SizedBox(height: 24),
+                _actions(),
+              ],
             ],
           ),
         ),

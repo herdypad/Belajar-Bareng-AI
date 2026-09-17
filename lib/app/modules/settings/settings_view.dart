@@ -13,23 +13,57 @@ class SettingsView extends GetView<SettingsController> {
 
   @override
   Widget build(BuildContext context) {
+    final isTablet = ResponsiveBreakpoints.isTabletOrLarger(context);
+
     return Scaffold(
       body: SafeArea(
         child: MobileShell(
-          maxWidth: 680,
           child: Column(
             children: [
               _header(context),
               Expanded(
                 child: ListView(
-                  padding: const EdgeInsets.all(20),
+                  padding: EdgeInsets.fromLTRB(
+                    isTablet ? 32 : 20,
+                    16,
+                    isTablet ? 32 : 20,
+                    32,
+                  ),
                   children: [
-                    _themeSection(context),
-                    const SizedBox(height: 24),
-                    _aiSection(context),
-                    const SizedBox(height: 24),
-                    _saveButton(),
-                    const SizedBox(height: 16),
+                    if (isTablet)
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            flex: 5,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _themeSection(context),
+                                const SizedBox(height: 24),
+                                _updateSection(context),
+                                const SizedBox(height: 24),
+                                _saveButton(),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 24),
+                          Expanded(
+                            flex: 6,
+                            child: _aiSection(context),
+                          ),
+                        ],
+                      )
+                    else ...[
+                      _themeSection(context),
+                      const SizedBox(height: 24),
+                      _aiSection(context),
+                      const SizedBox(height: 24),
+                      _saveButton(),
+                      const SizedBox(height: 24),
+                      _updateSection(context),
+                      const SizedBox(height: 16),
+                    ],
                   ],
                 ),
               ),
@@ -41,15 +75,24 @@ class SettingsView extends GetView<SettingsController> {
   }
 
   Widget _header(BuildContext context) {
+    final isTablet = ResponsiveBreakpoints.isTabletOrLarger(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
+      padding: EdgeInsets.fromLTRB(
+        isTablet ? 32 : 20,
+        24,
+        isTablet ? 32 : 20,
+        8,
+      ),
       child: Row(
         children: [
           CircleIconButton(icon: Icons.arrow_back, onTap: Get.back),
           const SizedBox(width: 16),
-          const Expanded(
+          Expanded(
             child: Text('Pengaturan',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+                style: TextStyle(
+                  fontSize: isTablet ? 24 : 20,
+                  fontWeight: FontWeight.w700,
+                )),
           ),
         ],
       ),
@@ -344,6 +387,76 @@ class SettingsView extends GetView<SettingsController> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _updateSection(BuildContext context) {
+    final s = context.surfaces;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'PEMBARUAN APLIKASI',
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 1),
+        ),
+        const SizedBox(height: 12),
+        AppCard(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.system_update_rounded,
+                      size: 22,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Pembaruan Sistem',
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Cek rilis build terbaru di GitHub Actions',
+                          style: TextStyle(fontSize: 12, color: s.muted),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: controller.openUpdateUrl,
+                  icon: const Icon(Icons.download_rounded, size: 18),
+                  label: const Text('Update Aplikasi'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

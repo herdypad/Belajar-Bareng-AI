@@ -93,6 +93,44 @@ void main() {
         ),
       );
       expect(box.constraints.maxWidth, 680.0);
+      // Test tablet landscape size
+      tester.view.physicalSize = const Size(1024, 768);
+      await tester.pumpWidget(buildShell());
+      box = tester.widget<ConstrainedBox>(
+        find.descendant(
+          of: find.byType(MobileShell),
+          matching: find.byType(ConstrainedBox),
+        ),
+      );
+      expect(box.constraints.maxWidth, 1040.0);
+    });
+
+    testWidgets('ResponsiveBreakpoints identifies tablet landscape and desktop',
+        (tester) async {
+      bool? isLandscape;
+
+      Widget buildWidget() {
+        return MaterialApp(
+          home: Builder(
+            builder: (context) {
+              isLandscape = ResponsiveBreakpoints.isTabletLandscapeOrDesktop(context);
+              return const SizedBox.shrink();
+            },
+          ),
+        );
+      }
+
+      tester.view.physicalSize = const Size(800, 1280);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(buildWidget());
+      expect(isLandscape, false);
+
+      tester.view.physicalSize = const Size(1024, 768);
+      await tester.pumpWidget(buildWidget());
+      expect(isLandscape, true);
     });
 
     testWidgets('QuizActionSheet on tablet stays centered and constrained',

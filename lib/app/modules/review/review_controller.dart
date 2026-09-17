@@ -94,4 +94,10 @@ class ReviewController extends GetxController {
       currentIndex.value--;
     }
   }
+
+  String selectedText = '';
+
+  void updateSelectedText(String? text) {
+    selectedText = text?.trim() ?? '';
+  }
 }

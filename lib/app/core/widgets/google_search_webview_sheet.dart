@@ -8,14 +8,69 @@ import 'package:webview_flutter/webview_flutter.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 
+import 'dart:convert';
+
 class GoogleSearchWebViewSheet extends StatefulWidget {
   final String query;
 
   const GoogleSearchWebViewSheet({super.key, required this.query});
 
+  /// Membersihkan query agar tidak berbentuk JSON mentah melainkan kalimat bersih yang diblok.
+  static String cleanQuery(String raw) {
+    var text = raw.trim();
+
+    // Deteksi dan bersihkan format JSON jika teks diawali dan diakhiri kurung kurawal/siku
+    if ((text.startsWith('{') && text.endsWith('}')) ||
+        (text.startsWith('[') && text.endsWith(']'))) {
+      try {
+        final decoded = jsonDecode(text);
+        if (decoded is Map) {
+          if (decoded.containsKey('question')) {
+            text = decoded['question'].toString();
+          } else if (decoded.containsKey('title')) {
+            text = decoded['title'].toString();
+          } else if (decoded.containsKey('explanation')) {
+            text = decoded['explanation'].toString();
+          } else if (decoded.values.isNotEmpty) {
+            text = decoded.values.first.toString();
+          }
+        } else if (decoded is List && decoded.isNotEmpty) {
+          final first = decoded.first;
+          if (first is Map && first.containsKey('question')) {
+            text = first['question'].toString();
+          } else {
+            text = first.toString();
+          }
+        }
+      } catch (_) {}
+    }
+
+    // Bersihkan format potongan JSON seperti "question": "kalimat" jika tersalin
+    final jsonKeyRegex = RegExp(
+      r'"(?:question|explanation|title|topic)":\s*"([^"]+)"',
+      caseSensitive: false,
+    );
+    final match = jsonKeyRegex.firstMatch(text);
+    if (match != null && match.group(1) != null) {
+      text = match.group(1)!;
+    }
+
+    // Hapus tanda kutip luar jika ada
+    if (text.length >= 2 &&
+        ((text.startsWith('"') && text.endsWith('"')) ||
+            (text.startsWith("'") && text.endsWith("'")))) {
+      text = text.substring(1, text.length - 1).trim();
+    }
+
+    // Rapikan spasi berlebih
+    text = text.replaceAll(RegExp(r'\s+'), ' ').trim();
+
+    return text;
+  }
+
   static Future<void> show(BuildContext context, {required String query}) {
-    final trimmed = query.trim();
-    if (trimmed.isEmpty) return Future.value();
+    final cleaned = cleanQuery(query);
+    if (cleaned.isEmpty) return Future.value();
 
     final isTablet = MediaQuery.of(context).size.width >= 600;
 
@@ -29,7 +84,7 @@ class GoogleSearchWebViewSheet extends StatefulWidget {
       builder: (_) => Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 720),
-          child: GoogleSearchWebViewSheet(query: trimmed),
+          child: GoogleSearchWebViewSheet(query: cleaned),
         ),
       ),
     );
