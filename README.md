@@ -3,6 +3,7 @@
 Aplikasi latihan soal pilihan ganda berbasis AI untuk Android, iOS, dan Web. Tulis topik yang ingin dipelajari, dan aplikasi akan men-generate soal lewat AI, menyimpannya secara lokal, lalu membiarkanmu mengerjakannya kapan saja — **bahkan tanpa internet**.
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
+[![Download APK](https://img.shields.io/badge/Download-APK%20Latest-success?logo=android&logoColor=white)](https://github.com/herdypad/Belajar-Bareng-AI/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#kontribusi)
 
@@ -12,6 +13,7 @@ Aplikasi latihan soal pilihan ganda berbasis AI untuk Android, iOS, dan Web. Tul
 
 ## Daftar Isi
 
+- [Unduh Aplikasi (APK)](#unduh-aplikasi-apk)
 - [Fitur](#fitur)
 - [Cara Kerja](#cara-kerja)
 - [Tangkapan Layar](#tangkapan-layar)
@@ -25,6 +27,19 @@ Aplikasi latihan soal pilihan ganda berbasis AI untuk Android, iOS, dan Web. Tul
 - [Kontribusi](#kontribusi)
 - [Roadmap](#roadmap)
 - [Lisensi](#lisensi)
+
+---
+
+## Unduh Aplikasi (APK)
+
+Untuk langsung mencoba dan menginstal aplikasi di perangkat Android Anda, unduh APK rilis terbaru melalui GitHub Actions:
+
+📥 **[Unduh APK Terbaru di GitHub Actions](https://github.com/herdypad/Belajar-Bareng-AI/actions)**
+
+> **Panduan Unduh:**
+> 1. Klik tautan [GitHub Actions](https://github.com/herdypad/Belajar-Bareng-AI/actions).
+> 2. Pilih workflow run terbaru yang berstatus sukses (ikon centang hijau).
+> 3. Gulir ke bawah ke bagian **Artifacts** lalu unduh file artifact APK yang tersedia.
 
 ---
 
@@ -91,7 +106,7 @@ flutter doctor
 
 ```bash
 # 1. Clone repositori
-git clone https://github.com/<username>/belajar-bareng-ai.git
+git clone https://github.com/herdypad/Belajar-Bareng-AI.git
 cd belajar-bareng-ai
 
 # 2. Ambil dependency
