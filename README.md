@@ -112,7 +112,7 @@ cd belajar-bareng-ai
 # 2. Ambil dependency
 flutter pub get
 
-# 3. Generate adapter Hive (wajib, file *.g.dart tidak di-commit)
+# 3. (Opsional) Regenerasi adapter Hive — file *.g.dart sudah ikut di-commit
 flutter pub run build_runner build --delete-conflicting-outputs
 ```
 
@@ -182,9 +182,23 @@ lib/
     │   ├── history/                 # riwayat kuis
     │   └── settings/                # provider, model, base URL, API key
     └── routes/                      # app_pages.dart, app_routes.dart
-specs/
-└── PRD.md                           # Product Requirements Document
+docs/
+├── PRD.md                           # Product Requirements Document
+├── ai-guidelines.md                 # Standar koding & arsitektur (sumber aturan untuk AI)
+├── database-schema.md               # Skema Hive, typeId, key pengaturan, aturan migrasi
+└── specs/                           # Spec per fitur (+ _TEMPLATE.md)
+CLAUDE.md                            # Konteks untuk Claude Code
+.cursor/rules/project.mdc            # Aturan untuk Cursor
+.kiro/steering/                      # Aturan untuk Kiro
+system-prompt.txt                    # Prompt siap tempel untuk ChatGPT / Claude Web
 ```
+
+### Coding dengan AI
+
+Semua aturan ada di [docs/ai-guidelines.md](docs/ai-guidelines.md). File `CLAUDE.md`,
+`.cursor/rules/`, dan `.kiro/steering/` hanya merujuk ke sana, jadi cukup ubah satu file.
+Untuk fitur baru, salin [docs/specs/_TEMPLATE.md](docs/specs/_TEMPLATE.md), isi, lalu minta AI
+mengerjakan berdasarkan spec tersebut.
 
 ## Arsitektur
 
@@ -217,7 +231,7 @@ Setelah mengubah model Hive:
 flutter pub run build_runner build --delete-conflicting-outputs
 ```
 
-Spec produk lengkap ada di [specs/PRD.md](specs/PRD.md).
+Spec produk lengkap ada di [docs/PRD.md](docs/PRD.md).
 
 ## Kontribusi
 
